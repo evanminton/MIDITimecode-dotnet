@@ -360,7 +360,7 @@ namespace MidiTimecode.Cli
             if (a.Positional.Count == 0) throw new ArgumentException("A time code is required.");
             var tc = Timecode.Parse(a.Positional[0], from);
             var converted = tc.ConvertTo(to);
-            Console.WriteLine($"{tc.ToLongString()}  =  {converted.ToLongString()}   (real time {tc.ToTimeSpan():hh\\:mm\\:ss\\.fff}, rounded down to a frame)");
+            Console.WriteLine($"{tc.ToLongString()}  =  {converted.ToLongString()}   (real time {tc.ToTimeSpan():hh\\:mm\\:ss\\.fff}; .ff = 1/100 frames, rounded down)");
             return 0;
         }
 

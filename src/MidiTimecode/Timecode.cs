@@ -117,17 +117,23 @@ public readonly partial struct Timecode : IEquatable<Timecode>, IComparable<Time
     public Timecode WithSubFrames(int subFrames) => new(Hours, Minutes, Seconds, Frames, Rate, subFrames);
 
     /// <summary>
-    /// Re-expresses this position at another rate, keeping real elapsed time (rounded down to a frame).
+    /// Re-expresses this position at another rate, keeping real elapsed time: rounded down to a
+    /// 1/100 frame, with the fraction kept in <see cref="SubFrames"/>.
     /// </summary>
     public Timecode ConvertTo(MtcFrameRate rate) => rate == Rate ? this : FromTimeSpan(ToTimeSpan(), rate);
 
-    /// <summary>Real time elapsed since 00:00:00:00 (drop-frame uses 29.97 frames/second).</summary>
+    /// <summary>
+    /// Real time elapsed since 00:00:00:00 (drop-frame uses 29.97 frames/second), rounded up to the
+    /// first tick inside this frame so <see cref="FromTimeSpan"/> maps it back to the same address.
+    /// </summary>
     public TimeSpan ToTimeSpan()
     {
         var (n, d) = Rate.FrameRateRational();
-        // ticks = frames * d / n * TicksPerSecond, computed in decimal-free integer math.
+        // ticks = ceil(frames * d / n * TicksPerSecond), computed in decimal-free integer math.
         var hundredths = TotalFrames * 100 + SubFrames;
-        var ticks = (Int128)hundredths * d * TimeSpan.TicksPerSecond / ((Int128)n * 100);
+        var numerator = (Int128)hundredths * d * TimeSpan.TicksPerSecond;
+        var denominator = (Int128)n * 100;
+        var ticks = (numerator + denominator - 1) / denominator;
         return TimeSpan.FromTicks((long)ticks);
     }
 
