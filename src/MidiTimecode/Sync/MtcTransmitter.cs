@@ -208,17 +208,19 @@ public sealed class MtcTransmitter : IDisposable
     public void StopClock()
     {
         Thread? thread;
+        CancellationTokenSource? cts;
         lock (_gate)
         {
             thread = _thread;
             if (thread is null) return;
-            _cts!.Cancel();
+            cts = _cts;
+            cts!.Cancel();
             _thread = null;
+            _cts = null;
         }
         _wake.Set();
         thread.Join(TimeSpan.FromSeconds(2));
-        _cts?.Dispose();
-        _cts = null;
+        cts.Dispose();
         RestoreTimerResolution();
     }
 

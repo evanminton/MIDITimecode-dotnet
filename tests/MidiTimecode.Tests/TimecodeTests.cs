@@ -105,6 +105,22 @@ public class TimecodeTests
         Assert.Equal(new Timecode(0, 0, 0, 12, MtcFrameRate.Fps25, 50), Timecode.FromTimeSpan(TimeSpan.FromMilliseconds(500), MtcFrameRate.Fps25));
     }
 
+    [Theory]
+    [InlineData(MtcFrameRate.Fps24)]
+    [InlineData(MtcFrameRate.Fps25)]
+    [InlineData(MtcFrameRate.Fps30Drop)]
+    [InlineData(MtcFrameRate.Fps30)]
+    public void TimeSpan_RoundTrip_Is_Exact(MtcFrameRate rate)
+    {
+        // Frame starts that are not a whole number of ticks (e.g. 13/24 s) must not come back as ff-1.99.
+        for (long f = 0; f < rate.FramesPerDay(); f += 997)
+        {
+            var tc = Timecode.FromTotalFrames(f, rate, (int)(f % 100));
+            Assert.Equal(tc, Timecode.FromTimeSpan(tc.ToTimeSpan(), rate));
+        }
+        Assert.Equal(new Timecode(0, 0, 0, 13, MtcFrameRate.Fps24), Timecode.FromTimeSpan(new Timecode(0, 0, 0, 13, MtcFrameRate.Fps24).ToTimeSpan(), MtcFrameRate.Fps24));
+    }
+
     [Fact]
     public void Hours_Byte()
     {
