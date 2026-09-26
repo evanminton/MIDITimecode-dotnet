@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MidiTimecode</RootNamespace>
+    <AssemblyName>MidiTimecode</AssemblyName>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <PackageId>MidiTimecode</PackageId>
+    <Description>MIDI Time Code (MMA0001 / RP-004 / RP-008, doc 4.2.1) for .NET 10 / .NET MAUI: quarter-frame and full messages, user bits, MTC cueing, a streaming parser, a locking receiver and a clocked transmitter.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>midi;mtc;timecode;smpte;sync;maui</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="MidiTimecode.Tests" />
+  </ItemGroup>
+</Project>

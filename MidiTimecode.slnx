@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MidiTimecode/MidiTimecode.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/MidiTimecode.Cli/MidiTimecode.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MidiTimecode.Tests/MidiTimecode.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/MtcExplorer/MtcExplorer.csproj" />
+  </Folder>
+</Solution>

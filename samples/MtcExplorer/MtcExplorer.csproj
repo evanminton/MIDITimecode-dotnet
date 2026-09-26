@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      Windows on Windows; iOS / Mac Catalyst on macOS; Android only when an Android SDK is found
+      (ANDROID_HOME / ANDROID_SDK_ROOT / AndroidSdkDirectory or the default install locations).
+      Force it either way with -p:EnableAndroid=true|false.
+    -->
+    <EnableAndroid Condition="'$(EnableAndroid)' == '' and ('$(ANDROID_HOME)' != '' or '$(ANDROID_SDK_ROOT)' != '' or '$(AndroidSdkDirectory)' != '' or Exists('$(LOCALAPPDATA)\Android\Sdk') or Exists('$(MSBuildProgramFiles32)\Android\android-sdk') or Exists('$(HOME)/Library/Android/sdk') or Exists('$(HOME)/Android/Sdk'))">true</EnableAndroid>
+    <TargetFrameworks Condition="'$(EnableAndroid)' == 'true'">net10.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworks.Trim(';'))</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MtcExplorer</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+
+    <ApplicationTitle>MTC Explorer</ApplicationTitle>
+    <ApplicationId>com.evanminton.mtcexplorer</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+
+    <WindowsPackageType>None</WindowsPackageType>
+
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+    <CodesignEntitlements>Platforms/MacCatalyst/Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#141414" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#141414" BaseSize="128,128" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MidiTimecode\MidiTimecode.csproj" />
+  </ItemGroup>
+
+</Project>
