@@ -57,8 +57,16 @@ public sealed class DecodePage : ContentPage
 
     private async void Paste()
     {
-        var text = await Clipboard.Default.GetTextAsync();
-        if (!string.IsNullOrEmpty(text)) _input.Text = text;
+        try
+        {
+            var text = await Clipboard.Default.GetTextAsync();
+            if (!string.IsNullOrEmpty(text)) _input.Text = text;
+        }
+        catch (Exception ex)
+        {
+            _summary.Text = $"Could not read the clipboard: {ex.Message}";
+            _summary.TextColor = Ui.Bad;
+        }
     }
 
     private void Decode()
@@ -74,6 +82,7 @@ public sealed class DecodePage : ContentPage
         {
             _summary.Text = "Not valid hex yet.";
             _summary.TextColor = Ui.Bad;
+            _output.Text = "";
             return;
         }
         _summary.TextColor = Ui.Muted;

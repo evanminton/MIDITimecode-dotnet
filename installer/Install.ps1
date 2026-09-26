@@ -16,7 +16,8 @@ $version = if (Test-Path "$src\version.txt") { (Get-Content "$src\version.txt").
 if (-not (Test-Path "$src\app\MtcExplorer.exe")) { throw "app\MtcExplorer.exe not found next to Install.ps1" }
 
 # Close a running copy so files can be replaced.
-Get-Process MtcExplorer -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$InstallDir*" } | Stop-Process -Force
+Get-Process MtcExplorer -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$InstallDir\*" } |
+    ForEach-Object { $_ | Stop-Process -Force; $_ | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue }
 
 Write-Host "Installing MTC Explorer $version to $InstallDir"
 if (Test-Path "$InstallDir\app") { Remove-Item "$InstallDir\app" -Recurse -Force }
@@ -43,10 +44,13 @@ foreach ($l in $links) {
 # CLI on the user PATH
 $cliDir = Join-Path $InstallDir 'cli'
 if (-not $NoPath) {
-    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    # Raw (unexpanded) value, written back as REG_EXPAND_SZ so %VAR% entries keep working.
+    $userPath = (Get-Item 'HKCU:\Environment').GetValue('Path', '', 'DoNotExpandEnvironmentNames')
     $parts = @($userPath -split ';' | Where-Object { $_ })
     if ($parts -notcontains $cliDir) {
-        [Environment]::SetEnvironmentVariable('Path', (($parts + $cliDir) -join ';'), 'User')
+        Set-ItemProperty 'HKCU:\Environment' Path (($parts + $cliDir) -join ';') -Type ExpandString
+        # Setting the registry directly does not broadcast WM_SETTINGCHANGE; this call does (no-op value change).
+        [Environment]::SetEnvironmentVariable('MTC_EXPLORER_PATH_REFRESH', $null, 'User')
         Write-Host "Added $cliDir to your PATH (open a new terminal to use 'mtc')."
     }
 }

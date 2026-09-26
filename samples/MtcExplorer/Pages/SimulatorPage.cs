@@ -157,10 +157,11 @@ public sealed class SimulatorPage : ContentPage
     private void StepShuttle()
     {
         if (!_shuttling || !TryReadTime(out var target)) return;
+        target = target.WithSubFrames(0); // positions are whole frames; a typed .ff would never be reached
         if ((DateTime.UtcNow - _lastShuttle).TotalMilliseconds < 100) return;
         _lastShuttle = DateTime.UtcNow;
 
-        var here = _sim.Transmitter.Position.ConvertTo(target.Rate);
+        var here = _sim.Transmitter.Position.ConvertTo(target.Rate).WithSubFrames(0);
         var distance = target.TotalFrames - here.TotalFrames;
         var perDay = target.Rate.FramesPerDay();
         if (distance > perDay / 2) distance -= perDay;
