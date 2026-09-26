@@ -98,3 +98,13 @@ mtc options [rates|quarter|fields|messages|setup|special|device|info|rules|modes
 - **Reference:** a searchable catalog of everything the spec defines (`MtcOptions`).
 
 There is no MIDI port I/O in the box. Plug a port in by implementing `IMidiOutput` and calling `MtcReceiver.Feed` from your input callback.
+
+## Standalone install (Windows)
+
+`.\publish.ps1` publishes MTC Explorer and `mtc.exe` self-contained (the .NET runtime and Windows App SDK are bundled, so the target PC needs nothing else), then installs them for the current user.
+
+- Output: `artifacts\publish\win-x64\`, `artifacts\MtcExplorer-<version>-win-x64.zip` and, when Inno Setup 6.3+ is installed (`winget install -e --id JRSoftware.InnoSetup`), `artifacts\MtcExplorer-<version>-win-x64-setup.exe`.
+- `setup.exe` (Inno Setup, `installer\MtcExplorer.iss`): installs per user by default, or for all users into Program Files if you choose that on the first page. It has options for a desktop icon and for adding `mtc` to PATH, and an uninstaller. `publish.ps1` runs it at the end.
+- Zip: copy it to another PC, unzip it and double-click `Install.cmd`. This is a script install and doesn't need Inno.
+- Install location: `%LOCALAPPDATA%\Programs\MTC Explorer`. It adds a Start menu shortcut, puts `cli\` on the user PATH (so `mtc` works in a new terminal) and adds an entry under Settings > Apps for uninstalling. No admin rights are needed.
+- Options: `-NoInstall` (package only), `-NoInno` (skip setup.exe), `-Runtime win-arm64|win-x86`, `-Configuration Debug`. `Install.ps1` accepts `-InstallDir`, `-NoPath`, `-Desktop` and `-NoLaunch`.
