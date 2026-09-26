@@ -231,7 +231,14 @@ public sealed class EncodePage : ContentPage
     private async void CopyHex()
     {
         if (_messages.Length == 0) return;
-        await Clipboard.Default.SetTextAsync(MtcHex.Format(_messages));
+        try
+        {
+            await Clipboard.Default.SetTextAsync(MtcHex.Format(_messages));
+        }
+        catch (Exception ex)
+        {
+            _error.Text = $"Could not copy to the clipboard: {ex.Message}";
+        }
     }
 
     private void SendToSimulator()

@@ -18,6 +18,8 @@ MIDI Time Code (MTC), built from the MMA specification *MIDI Time Code* (MMA0001
 ```
 
 Or directly: `dotnet build MidiTimecode.slnx -c Debug` / `-c Release`, then `dotnet test -c Debug` / `-c Release`.
+The solution includes the MAUI app, so building it that way needs the MAUI workload on Windows or macOS.
+Without it (or on Linux) use `./build.sh` / `.\build.ps1 -NoApp`, or build `tests/MidiTimecode.Tests` and `tools/MidiTimecode.Cli` directly.
 The MAUI app needs the MAUI workload (`dotnet workload install maui`). The Android target is only built when an Android SDK is found (or with `-p:EnableAndroid=true`); on Windows without one you get the Windows app only. To run it on Windows:
 `dotnet build samples/MtcExplorer -f net10.0-windows10.0.19041.0 -t:Run`.
 
