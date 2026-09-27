@@ -10,6 +10,8 @@ param(
     [switch]$NoLaunch
 )
 $ErrorActionPreference = 'Stop'
+# Full path, so the Apps entry, shortcuts and Uninstall.ps1's location check don't depend on the current folder.
+$InstallDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($InstallDir).TrimEnd('\')
 $src     = $PSScriptRoot
 $version = if (Test-Path "$src\version.txt") { (Get-Content "$src\version.txt").Trim() } else { '1.0.0' }
 

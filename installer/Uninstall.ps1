@@ -7,8 +7,11 @@ $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MtcExplorer'
 
 # Only act on the folder Install.ps1 registered, so running this from an unzipped package (or a
 # stray copy) does not delete that folder or remove the real install's shortcuts and entry.
+function Get-NormalizedPath([string]$p) {
+    try { [IO.Path]::GetFullPath(($p -replace '/', '\')).TrimEnd('\') } catch { $p }
+}
 $registered = (Get-ItemProperty $key -ErrorAction SilentlyContinue).InstallLocation
-if (-not $registered -or ($registered.TrimEnd('\') -ne $InstallDir.TrimEnd('\'))) {
+if (-not $registered -or ((Get-NormalizedPath $registered) -ne (Get-NormalizedPath $InstallDir))) {
     Write-Warning "MTC Explorer is not registered as installed in $InstallDir; nothing removed."
     return
 }
