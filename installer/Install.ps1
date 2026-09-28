@@ -11,7 +11,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 # Full path, so the Apps entry, shortcuts and Uninstall.ps1's location check don't depend on the current folder.
-$InstallDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($InstallDir).TrimEnd('\')
+$InstallDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($InstallDir)
+if ([IO.Path]::GetPathRoot($InstallDir).TrimEnd('\') -eq $InstallDir.TrimEnd('\')) { throw "Install into a folder, not the root of a drive ($InstallDir)." }
+$InstallDir = $InstallDir.TrimEnd('\')
 $src     = $PSScriptRoot
 $version = if (Test-Path "$src\version.txt") { (Get-Content "$src\version.txt").Trim() } else { '1.0.0' }
 
