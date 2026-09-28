@@ -8,6 +8,7 @@ MIDI Time Code (MTC), built from the MMA specification *MIDI Time Code* (MMA0001
 | `tools/MidiTimecode.Cli` | `mtc`: a command-line tool that encodes, decodes, simulates and explains every MTC message. |
 | `tests/MidiTimecode.Tests` | xUnit tests, including every worked example in the spec. |
 | `samples/MtcExplorer` | .NET MAUI app (Windows, Android, iOS, Mac Catalyst): Simulator, Encode, Decode and Reference tabs. |
+| `app/MtcStudio` | **MTC Studio**: standalone Windows MAUI app. Generates and reads MTC on real MIDI ports (WinMM), with a traffic monitor, a message sender, a decoder and the reference. |
 
 ## Build
 
@@ -99,7 +100,30 @@ mtc options [rates|quarter|fields|messages|setup|special|device|info|rules|modes
 - **Decode:** paste any MIDI bytes to get a per-byte breakdown, with a receiver run over the stream. It comes with examples.
 - **Reference:** a searchable catalog of everything the spec defines (`MtcOptions`).
 
-There is no MIDI port I/O in the box. Plug a port in by implementing `IMidiOutput` and calling `MtcReceiver.Feed` from your input callback.
+The library has no MIDI port I/O of its own. Plug a port in by implementing `IMidiOutput` and calling `MtcReceiver.Feed` from your input callback; MTC Studio (`app/MtcStudio/Midi`) shows how, with WinMM.
+
+## MTC Studio (Windows)
+
+A standalone Windows app (unpackaged, self-contained) that runs MIDI Time Code on real MIDI ports: anything Windows lists, including USB interfaces and virtual ports such as loopMIDI.
+
+- **Studio:** the generator and the reader side by side.
+  - **Generator:** choose a MIDI output. You get a big time display, Play, Stop, Stop + NAK, Go to start, and Rewind / Fast forward (shuttle: Full Messages only, as the spec asks). You can nudge by ±1 frame, ±1 s or ±10 s, choose forward or reverse (Cue mode rocking), set the vari-speed from 0.1× to 4×, pick one of the 4 SMPTE types, set the start time and device ID, and send user bits. By default a Full Message goes out before Play so readers jump straight to the position.
+  - **Reader:** choose a MIDI input, or *Generator (internal loopback)* to test without cables. You get a big time display coloured by lock state (Locked, Syncing, Located, Stopped), plus direction, rate, user bits, the last full sequence, and counters for quarter frames, sequences, discontinuities, invalid sequences, Full Messages and parser/driver errors. You can set a device ID filter and the dropout time. In loopback it also shows the reader − generator offset.
+- **Monitor:** live traffic in both directions, one line per message in plain English, with a filter, pause, copy and an optional quarter-frame log. Select a line to see every byte explained.
+- **Send:** build any message (quarter-frame sequences, Full, User Bits, both cueing forms with every set-up and special type, NAK, or raw MIDI hex), see it explained, and send it to the output.
+- **Decode** and **Reference:** the same as in MTC Explorer.
+
+The ports, rate, start time, device IDs, speed and options you choose are remembered between runs.
+
+Run it from source with `dotnet build app/MtcStudio -t:Run`. The build output is already self-contained.
+
+Standalone package: `.\publish-studio.ps1`, or double-click `PublishStudio.cmd` (the log goes to `publish-studio.log`). It creates:
+
+- `artifacts\studio\win-x64\app\MtcStudio.exe`, which runs in place.
+- `artifacts\MtcStudio-<version>-win-x64-portable.zip`. Unzip it anywhere and run `app\MtcStudio.exe`; nothing needs installing.
+- `artifacts\MtcStudio-<version>-win-x64-setup.exe` (Inno Setup, `installer\MtcStudio.iss`), which installs per user or for all users and has a Start menu entry, an optional desktop icon, an optional `mtc` on PATH and an uninstaller.
+
+Options: `-Install` (run the setup wizard afterwards), `-NoInno`, `-Runtime win-arm64|win-x86`, `-Configuration Debug`.
 
 ## Standalone install (Windows)
 

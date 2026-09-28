@@ -8,6 +8,9 @@
   <Folder Name="/tests/">
     <Project Path="tests/MidiTimecode.Tests/MidiTimecode.Tests.csproj" />
   </Folder>
+  <Folder Name="/app/">
+    <Project Path="app/MtcStudio/MtcStudio.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/MtcExplorer/MtcExplorer.csproj" />
   </Folder>
