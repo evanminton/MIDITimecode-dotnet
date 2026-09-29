@@ -240,4 +240,20 @@ public class MessageTests
         Assert.Equal(6, MtcOptions.Find("messages")!.Options.Count);
         Assert.Contains("Event List Request", MtcOptions.ToText());
     }
+
+    [Fact]
+    public void MidiDataDescriber_Keeps_Running_Status_Across_Real_Time_Bytes()
+    {
+        var lines = MidiDataDescriber.Describe(Bytes.Hex("90 3C 40 F8 3E 40"));
+        Assert.Equal(3, lines.Count);
+        Assert.Contains("Timing Clock", lines[1]);
+        Assert.Contains("Note On ch 1, note 62, velocity 64 (running status)", lines[2]);
+    }
+
+    [Fact]
+    public void MidiDataDescriber_System_Common_Cancels_Running_Status()
+    {
+        var lines = MidiDataDescriber.Describe(Bytes.Hex("90 3C 40 F6 3E"));
+        Assert.Contains("stray data byte", lines[^1]);
+    }
 }
