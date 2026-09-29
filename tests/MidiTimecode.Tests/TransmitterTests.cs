@@ -132,4 +132,58 @@ public class TransmitterTests
         tx.StopClock();
         Assert.InRange(count, 40, 80); // ~60 expected; generous for CI jitter
     }
+
+    [Theory]
+    [InlineData(MtcDirection.Forward, MtcDirection.Reverse)]
+    [InlineData(MtcDirection.Reverse, MtcDirection.Forward)]
+    public void Direction_Change_While_Located_Starts_On_Located_Frame(MtcDirection from, MtcDirection to)
+    {
+        var clock = new ManualTimeProvider();
+        using var tx = new MtcTransmitter(new Capture(), Timecode.Zero(), clock) { Direction = from };
+        var target = new Timecode(0, 0, 0, 10);
+        tx.Locate(target);
+        tx.Direction = to;
+        tx.Play();
+        Assert.Equal(1, tx.Pump());
+        Assert.Equal(target, tx.Position);
+    }
+
+    [Fact]
+    public void Reversal_Recrosses_Boundary_After_Distance_Travelled()
+    {
+        var clock = new ManualTimeProvider();
+        var cap = new Capture();
+        using var tx = new MtcTransmitter(cap, new Timecode(0, 0, 1, 0), clock);
+        tx.Play();
+        Assert.Equal(1, tx.Pump());
+        var q = MtcFrameRate.Fps30.QuarterFrameDuration();
+        clock.Advance(q * 0.25);
+        tx.Direction = MtcDirection.Reverse;
+        clock.Advance(q * 0.20);
+        Assert.Equal(0, tx.Pump());   // not back at the boundary yet
+        clock.Advance(q * 0.10);
+        Assert.Equal(1, tx.Pump());   // 0.30 q after the flip: boundary recrossed
+        Assert.Equal(Bytes.Hex("F1 00"), cap.Messages[^1]); // same piece again = reversal
+    }
+
+    [Fact]
+    public void Reversal_Sends_Overdue_Quarter_Frames_In_Old_Direction_First()
+    {
+        var clock = new ManualTimeProvider();
+        var cap = new Capture();
+        using var tx = new MtcTransmitter(cap, new Timecode(0, 0, 1, 0), clock);
+        tx.Play();
+        tx.Pump();
+        clock.Advance(MtcFrameRate.Fps30.QuarterFrameDuration() * 2.5);
+        tx.Direction = MtcDirection.Reverse;
+        Assert.Equal(Bytes.Hex("F1 00 F1 10 F1 21"), cap.Messages.SelectMany(m => m).ToArray());
+    }
+
+    [Fact]
+    public void DeviceId_Above_7F_Is_Rejected_On_Set()
+    {
+        using var tx = new MtcTransmitter(new Capture());
+        Assert.Throws<ArgumentOutOfRangeException>(() => tx.DeviceId = 0x80);
+        Assert.Equal(MtcConstants.AllDevices, tx.DeviceId);
+    }
 }

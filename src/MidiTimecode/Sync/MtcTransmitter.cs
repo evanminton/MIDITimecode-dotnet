@@ -57,7 +57,13 @@ public sealed class MtcTransmitter : IDisposable
     }
 
     /// <summary>Device ID for Full, User Bits and NAK messages (default 7F, entire system).</summary>
-    public byte DeviceId { get; set; } = MtcConstants.AllDevices;
+    public byte DeviceId
+    {
+        get => _deviceId;
+        set => _deviceId = MtcMessage.Check7Bit(value, nameof(value));
+    }
+
+    private byte _deviceId = MtcConstants.AllDevices;
 
     /// <summary>Vari-speed factor (1 = normal play). Must be positive; 0.01 - 16.</summary>
     public double Speed
@@ -77,7 +83,20 @@ public sealed class MtcTransmitter : IDisposable
         set
         {
             if (value == MtcDirection.Unknown) throw new ArgumentOutOfRangeException(nameof(value));
-            lock (_gate) { Accumulate(); _generator.Direction = value; }
+            lock (_gate)
+            {
+                if (value == _generator.Direction) return;
+                Accumulate();
+                if (_mode == MtcTransportMode.Play)
+                {
+                    // Send what is overdue in the old direction, then the boundary just crossed lies
+                    // behind by the fraction already travelled: it is recrossed after the remainder.
+                    if (_due > MaxBurst) _due = MaxBurst;
+                    SendDue();
+                    _due = 1.0 - _due;
+                }
+                _generator.Direction = value;
+            }
         }
     }
 
@@ -163,18 +182,23 @@ public sealed class MtcTransmitter : IDisposable
             if (_mode != MtcTransportMode.Play) return 0;
             Accumulate();
             if (_due > MaxBurst) _due = MaxBurst;
-            var sent = 0;
-            while (_due >= 1.0)
-            {
-                _due -= 1.0;
-                var qf = _generator.Next();
-                _position = _generator.CurrentFrame;
-                QuarterFramesSent++;
-                SendLocked(qf);
-                sent++;
-            }
-            return sent;
+            return SendDue();
         }
+    }
+
+    private int SendDue()
+    {
+        var sent = 0;
+        while (_due >= 1.0)
+        {
+            _due -= 1.0;
+            var qf = _generator.Next();
+            _position = _generator.CurrentFrame;
+            QuarterFramesSent++;
+            SendLocked(qf);
+            sent++;
+        }
+        return sent;
     }
 
     /// <summary>Time until the next quarter frame is due at the current speed (zero if overdue, infinite if not playing).</summary>
