@@ -51,9 +51,9 @@ public sealed class FullTimecodeMessage : IMtcMessage, IEquatable<FullTimecodeMe
     {
         message = null;
         if (data.Length != MtcConstants.FullMessageLength || !HasHeader(data) || data[9] != MtcConstants.SysExEnd) return false;
-        if (data[2] > 0x7F) return false;
+        if (!MtcMessage.HasDataBytesOnly(data)) return false;
         var (hours, rate) = Timecode.DecodeHoursByte(data[5]);
-        if (!Timecode.TryCreate(hours, data[6] & 0x7F, data[7] & 0x7F, data[8] & 0x7F, rate, out var tc)) return false;
+        if (!Timecode.TryCreate(hours, data[6], data[7], data[8], rate, out var tc)) return false;
         message = new FullTimecodeMessage(tc, data[2]);
         return true;
     }
