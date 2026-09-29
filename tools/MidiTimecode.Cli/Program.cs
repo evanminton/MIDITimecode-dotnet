@@ -15,9 +15,9 @@ if (args.Length == 0 || args[0] is "help" or "-h" or "--help" or "/?")
     return 0;
 }
 
-var a = new CliArgs(args.Skip(1));
 try
 {
+    var a = new CliArgs(args.Skip(1));
     return args[0].ToLowerInvariant() switch
     {
         "encode" or "qf" or "quarter" => Commands.Encode(a),
@@ -37,7 +37,7 @@ try
         _ => Commands.Unknown(args[0]),
     };
 }
-catch (Exception ex) when (ex is FormatException or ArgumentException or InvalidOperationException)
+catch (Exception ex) when (ex is FormatException or ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
 {
     Console.Error.WriteLine($"error: {ex.Message}");
     return 2;
@@ -58,12 +58,12 @@ namespace MidiTimecode.Cli
               mtc userbits <8 hex digits | "TEXT"> [--flags ji] [--device 7F]
                   User Bits Message. Digits are group 8 → 1 (e.g. 12:34:56:78); quoted text is 4 characters.
               mtc cue <set-up type> [HH:MM:SS:FF[.ff]] [--event N] [--info HEX] [--name TEXT]
-                      [--realtime] [--rate R] [--device N]
+                      [--realtime] [--rate R] [--device 00]
                   MTC Cueing Set-Up message. Types by name or hex: punch-in, punch-out, delete-punch-in,
                   delete-punch-out, event-start, event-stop, event-start-info, event-stop-info,
                   delete-event-start, delete-event-stop, cue, cue-info, delete-cue, event-name, 00-0E.
                   --realtime sends the Real Time form (F0 7F dev 05 …, no time field).
-              mtc special <offset|enable|disable|clear|stop|request> [HH:MM:SS:FF] [--realtime] [--device N]
+              mtc special <offset|enable|disable|clear|stop|request> [HH:MM:SS:FF] [--realtime] [--device 00]
                   Special set-up (type 00; the special type takes the place of the event number).
               mtc nak [--device 7F] [--packet 0]
                   NAK: synchronization dropped / tape stopped.
@@ -111,7 +111,14 @@ namespace MidiTimecode.Cli
                     string? value = null;
                     var eq = key.IndexOf('=');
                     if (eq >= 0) { value = key[(eq + 1)..]; key = key[..eq]; }
-                    else if (i + 1 < list.Count && !list[i + 1].StartsWith("--", StringComparison.Ordinal) && !IsFlag(key)) value = list[++i];
+                    key = key.ToLowerInvariant();
+                    if (!IsFlag(key) && !TakesValue(key)) throw new FormatException($"Unknown option --{key}. Run 'mtc help'.");
+                    if (eq < 0 && !IsFlag(key))
+                    {
+                        if (i + 1 >= list.Count || list[i + 1].StartsWith("--", StringComparison.Ordinal))
+                            throw new FormatException($"--{key} needs a value.");
+                        value = list[++i];
+                    }
                     _options[key] = value;
                 }
                 else Positional.Add(s);
@@ -119,6 +126,10 @@ namespace MidiTimecode.Cli
         }
 
         private static bool IsFlag(string key) => key is "reverse" or "realtime" or "rt";
+
+        private static bool TakesValue(string key) => key is
+            "rate" or "device" or "flags" or "event" or "info" or "name" or "file" or "packet" or
+            "from" or "to" or "frames" or "speed" or "drop" or "flip";
 
         public List<string> Positional { get; } = [];
 
@@ -367,7 +378,7 @@ namespace MidiTimecode.Cli
         public static int Generate(CliArgs a)
         {
             var tc = a.Time(0);
-            var frames = a.GetInt("frames", 8);
+            var frames = Frames(a, 8);
             var gen = new QuarterFrameGenerator(tc, a.Has("reverse") ? MtcDirection.Reverse : MtcDirection.Forward);
             var sb = new StringBuilder();
             for (var i = 0; i < frames * 4; i++)
@@ -383,7 +394,7 @@ namespace MidiTimecode.Cli
         public static int Simulate(CliArgs a)
         {
             var tc = a.Time(0);
-            var frames = a.GetInt("frames", 12);
+            var frames = Frames(a, 12);
             var speed = a.GetDouble("speed", 1.0);
             var dropEvery = a.GetInt("drop", 0);
             var flipAfter = a.GetInt("flip", 0);
@@ -395,7 +406,7 @@ namespace MidiTimecode.Cli
             using var tx = new MtcTransmitter(new DelegateMidiOutput(b =>
             {
                 sent++;
-                if (dropEvery > 0 && sent % dropEvery == 0) { lastLine = $"{MtcHex.Format(b),-30} (lost)"; return; }
+                if (dropEvery > 0 && sent % dropEvery == 0) { lastLine = $"{MtcHex.Format(b)} (lost)"; return; }
                 rx.Feed(b);
                 lastLine = MtcHex.Format(b);
             }), tc, clock)
@@ -438,6 +449,15 @@ namespace MidiTimecode.Cli
             return 0;
 
             static string Show(Timecode? t) => t?.ToString() ?? "--";
+        }
+
+        private const int MaxFrames = 1_000_000;
+
+        private static int Frames(CliArgs a, int fallback)
+        {
+            var frames = a.GetInt("frames", fallback);
+            if (frames is < 1 or > MaxFrames) throw new FormatException($"--frames must be 1-{MaxFrames:N0}, got {frames}.");
+            return frames;
         }
 
         public static int Options(CliArgs a)
