@@ -224,14 +224,21 @@ public sealed class MtcEngine : IDisposable
         Settings.Rate = rate;
         var p = Transmitter.Position;
         if (p.Rate == rate) return;
-        var moved = Timecode.TryCreate(p.Hours, p.Minutes, p.Seconds, Math.Min(p.Frames, rate.FramesPerSecond() - 1), rate, out var same)
-            ? same
-            : p.ConvertTo(rate);
-        StartTime = Timecode.TryCreate(StartTime.Hours, StartTime.Minutes, StartTime.Seconds, Math.Min(StartTime.Frames, rate.FramesPerSecond() - 1), rate, out var s)
-            ? s
-            : StartTime.ConvertTo(rate).WithSubFrames(0);
+        var moved = SameLabel(p, rate);
+        StartTime = SameLabel(StartTime, rate);
         Settings.StartTime = StartTime.ToString();   // saved at the new rate so the next launch can read it back
         Locate(moved);
+    }
+
+    /// <summary>
+    /// The same HH:MM:SS:FF at another rate: frames above the new rate's last frame are clamped, and a
+    /// label drop-frame skips (;00 or ;01 at the start of most minutes) moves on to ;02.
+    /// </summary>
+    private static Timecode SameLabel(Timecode t, MtcFrameRate rate)
+    {
+        var frames = Math.Min(t.Frames, rate.FramesPerSecond() - 1);
+        if (rate.IsDropFrame() && t.Seconds == 0 && frames < 2 && t.Minutes % 10 != 0) frames = 2;
+        return new Timecode(t.Hours, t.Minutes, t.Seconds, frames, rate);
     }
 
     public void SetDirection(MtcDirection direction) => Transmitter.Direction = direction;
