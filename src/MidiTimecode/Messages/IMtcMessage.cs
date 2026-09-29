@@ -61,6 +61,13 @@ public static class MtcMessage
     public static IMtcMessage Parse(ReadOnlySpan<byte> data) =>
         TryParse(data, out var m) ? m! : throw new FormatException($"Not a MIDI Time Code message: {MidiTimecode.Describe.MtcHex.Format(data)}");
 
+    /// <summary>True when every byte between <c>F0</c> and <c>F7</c> is a data byte (bit 7 clear).</summary>
+    internal static bool HasDataBytesOnly(ReadOnlySpan<byte> sysex)
+    {
+        foreach (var b in sysex[1..^1]) if (b > 0x7F) return false;
+        return true;
+    }
+
     internal static byte Check7Bit(int value, string name)
     {
         if ((uint)value > 0x7F) throw new ArgumentOutOfRangeException(name, value, $"{name} must be 0x00-0x7F.");

@@ -64,7 +64,7 @@ public abstract class CueingMessageBase : IMtcMessage
     {
         eventNumber = 0;
         info = [];
-        if (data.Length < offset + 3 || data[^1] != MtcConstants.SysExEnd) return false;
+        if (data.Length < offset + 3 || data[^1] != MtcConstants.SysExEnd || !MtcMessage.HasDataBytesOnly(data)) return false;
         byte sl = data[offset], sm = data[offset + 1];
         if (sl > 0x7F || sm > 0x7F) return false;
         eventNumber = sl | (sm << 7);

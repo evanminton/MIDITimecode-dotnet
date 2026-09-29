@@ -168,12 +168,9 @@ public sealed class UserBitsMessage : IMtcMessage, IEquatable<UserBitsMessage>
         if (data.Length != MtcConstants.UserBitsMessageLength || data[0] != MtcConstants.SysExStart ||
             data[1] != MtcConstants.UniversalRealTime || data[3] != MtcConstants.SubIdMidiTimeCode ||
             data[4] != MtcConstants.SubIdUserBits || data[14] != MtcConstants.SysExEnd || data[2] > 0x7F) return false;
+        if (!MtcMessage.HasDataBytesOnly(data)) return false;
         uint packed = 0;
-        for (var g = 1; g <= 8; g++)
-        {
-            if (data[4 + g] > 0x7F) return false;
-            packed |= (uint)(data[4 + g] & 0x0F) << ((g - 1) * 4);
-        }
+        for (var g = 1; g <= 8; g++) packed |= (uint)(data[4 + g] & 0x0F) << ((g - 1) * 4);
         var u9 = data[13];
         message = new UserBitsMessage(new UserBits(packed, (u9 & 1) != 0, (u9 & 2) != 0), data[2]);
         return true;
