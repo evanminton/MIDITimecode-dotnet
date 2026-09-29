@@ -28,7 +28,7 @@ public static class MidiDataDescriber
 
             byte status;
             int start = i;
-            if (b >= 0x80) { status = b; i++; if (b < 0xF0) running = b; else running = 0; }
+            if (b >= 0x80) { status = b; i++; if (b < 0xF0) running = b; else if (b < 0xF8) running = 0; }
             else if (running != 0) status = running;
             else { lines.Add($"{b:X2}  stray data byte"); i++; continue; }
 
