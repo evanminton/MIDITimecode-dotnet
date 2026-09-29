@@ -56,7 +56,7 @@ public sealed class MtcEngine : IDisposable
     public MtcEngine()
     {
         var rate = Settings.Rate;
-        var start = Timecode.TryParse(Settings.StartTime, out var tc, rate) ? tc : Timecode.Zero(rate).AddFrames(3600L * rate.FramesPerSecond());
+        var start = Timecode.TryParse(Settings.StartTime, out var tc, rate) ? tc : new Timecode(1, 0, 0, 0, rate);
         StartTime = start;
 
         Transmitter = new MtcTransmitter(new DelegateOutput(Route), start);
@@ -229,7 +229,8 @@ public sealed class MtcEngine : IDisposable
             : p.ConvertTo(rate);
         StartTime = Timecode.TryCreate(StartTime.Hours, StartTime.Minutes, StartTime.Seconds, Math.Min(StartTime.Frames, rate.FramesPerSecond() - 1), rate, out var s)
             ? s
-            : StartTime.ConvertTo(rate);
+            : StartTime.ConvertTo(rate).WithSubFrames(0);
+        Settings.StartTime = StartTime.ToString();   // saved at the new rate so the next launch can read it back
         Locate(moved);
     }
 

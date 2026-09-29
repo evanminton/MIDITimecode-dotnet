@@ -214,7 +214,9 @@ public sealed class MidiInPort : IDisposable
                 _handle = IntPtr.Zero;
             }
         }
-        _queue.Dispose();
+        // A handler still busy after the join (or Dispose called from the handler itself) keeps
+        // reading the queue; disposing it under that thread would crash the app, so leave it to the GC.
+        if (_worker is null || !_worker.IsAlive) _queue.Dispose();
     }
 }
 
