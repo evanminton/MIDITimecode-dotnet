@@ -29,8 +29,22 @@ public sealed class QuarterFrameGenerator
 
     public MtcFrameRate Rate { get; private set; }
 
-    /// <summary>Direction of travel; may be changed at any time (e.g. tape rocked in Cue mode).</summary>
-    public MtcDirection Direction { get; set; }
+    /// <summary>
+    /// Direction of travel; may be changed at any time (e.g. tape rocked in Cue mode). Changed before
+    /// any message since <see cref="Locate"/>, the located frame is still the first one sent.
+    /// </summary>
+    public MtcDirection Direction
+    {
+        get => _direction;
+        set
+        {
+            if (value == _direction) return;
+            _direction = value;
+            if (MessagesSent == 0 && _boundariesPerDay != 0) Locate(CurrentFrame);
+        }
+    }
+
+    private MtcDirection _direction;
 
     /// <summary>Frame containing the current position (the quarter frame just entered).</summary>
     public Timecode CurrentFrame { get; private set; }
