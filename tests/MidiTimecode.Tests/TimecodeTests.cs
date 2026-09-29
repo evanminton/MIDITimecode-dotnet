@@ -92,6 +92,8 @@ public class TimecodeTests
     [InlineData("01:02:03")]
     [InlineData("25:00:00:00")]
     [InlineData("00:01:00;00")]
+    [InlineData("\uFF101:00:00:00")]   // full-width digit
+    [InlineData("01:00:00:\u0660\u0661")] // Arabic-Indic digits
     public void Parse_Rejects(string text) => Assert.False(Timecode.TryParse(text, out _));
 
     [Fact]
