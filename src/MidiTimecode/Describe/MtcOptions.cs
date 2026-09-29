@@ -117,7 +117,7 @@ public static class MtcOptions
             new("Lock", "One full sequence", "The reader must read 8 messages first to last before trusting the time: 2-4 frames after coming on line."),
             new("Boundary", "F1 0X and F1 4X", "Piece 0 is sent on the boundary of the frame it encodes; piece 4 on the following frame boundary."),
             new("+2 frames", "Display offset", "When F1 7X arrives the assembled time is 2 frames old: add 2 frames for display."),
-            new("Reverse", "Display −1 frame", "In reverse the time is complete on F1 0X (the start boundary of the encoded frame); the position has just entered the previous frame."),
+            new("Reverse", "Display −1 frame", "In reverse the time is complete on F1 0X (the start boundary of the encoded frame); the position has just entered the previous frame. Derived from the boundary rule; the specification states no reverse offset."),
             new("Even frames", "24 / 30df / 30", "Sequence frame numbers are always even; at 25 fps they alternate even/odd every second."),
             new("Verify", "Every sequence", "Check each complete time (every 2 frames) against the previous one to keep a proper lock."),
             new("Running", "After Full Message", "Time is running on the first quarter frame after a Full Message."),
@@ -144,7 +144,7 @@ public static class MtcOptions
             new("special", "Cueing Special Types", "With Set-Up Type 00 the special type replaces the event number (sl sm).", special),
             new("device", "Device ID", "Byte 3 of every MTC SysEx.", device),
             new("info", "Cueing fields", "Event time, event number and additional information.", info),
-            new("rules", "Reader / generator rules", "Timing behaviour the specification requires.", rules),
+            new("rules", "Reader / generator rules", "Timing behaviour from the specification (and what follows from it).", rules),
             new("modes", "Signal path modes", "Which messages are sent in each operating mode.", modes),
         ];
     }

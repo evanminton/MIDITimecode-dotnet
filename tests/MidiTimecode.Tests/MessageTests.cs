@@ -102,6 +102,25 @@ public class MessageTests
         Assert.False(CueingSpecialType.EventListRequest.IgnoresEventTime());
     }
 
+    [Theory]
+    [InlineData("01")] // Enable Event List
+    [InlineData("02")] // Disable Event List
+    [InlineData("03")] // Clear Event List
+    [InlineData("04")] // System Stop
+    public void Specials_That_Ignore_Time_Accept_Any_Time_Bytes(string special)
+    {
+        // Hours 31, minutes 99: not a valid address, but the field is ignored for these specials.
+        Assert.True(NonRealTimeCueingMessage.TryParse(Bytes.Hex($"F0 7E 01 04 00 7F 63 00 00 00 {special} 00 F7"), out var m));
+        Assert.Equal((CueingSpecialType)Convert.ToInt32(special, 16), m!.SpecialType);
+    }
+
+    [Theory]
+    [InlineData("F0 7E 01 04 00 7F 63 00 00 00 00 00 F7")] // Time Code Offset uses the time
+    [InlineData("F0 7E 01 04 00 7F 63 00 00 00 05 00 F7")] // Event List Request uses the time
+    [InlineData("F0 7E 01 04 0B 7F 63 00 00 00 04 00 F7")] // Cue point 4, not a special
+    public void Invalid_Time_Still_Rejected_Where_Time_Is_Used(string hex) =>
+        Assert.False(NonRealTimeCueingMessage.TryParse(Bytes.Hex(hex), out _));
+
     [Fact]
     public void Event_Name_Is_Nibblized_Ascii()
     {

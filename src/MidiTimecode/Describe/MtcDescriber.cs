@@ -185,16 +185,22 @@ public static class MtcDescriber
             new($"{m.DeviceId:X2}", $"Device ID {m.DeviceId} (unit addressed)"),
             new("04", "Sub-ID #1: MIDI Time Code (cueing set-up)"),
             new($"{(byte)m.SetupType:X2}", $"Set-Up Type: {m.SetupType.DisplayName()}"),
-            new($"{t.HoursByte:X2}", HoursText(t)),
-            new($"{t.Minutes:X2}", $"Minutes {t.Minutes}"),
-            new($"{t.Seconds:X2}", $"Seconds {t.Seconds}"),
-            new($"{t.Frames:X2}", $"Frames {t.Frames}"),
-            new($"{t.SubFrames:X2}", $"Fractional frames {t.SubFrames}/100"),
         };
+        if (m.SpecialType is { } ignored && ignored.IgnoresEventTime())
+            fields.Add(new(MtcHex.Format(raw.Slice(5, 5)), "Event time (ignored by this special type)"));
+        else
+            fields.AddRange([
+                new($"{t.HoursByte:X2}", HoursText(t)),
+                new($"{t.Minutes:X2}", $"Minutes {t.Minutes}"),
+                new($"{t.Seconds:X2}", $"Seconds {t.Seconds}"),
+                new($"{t.Frames:X2}", $"Frames {t.Frames}"),
+                new($"{t.SubFrames:X2}", $"Fractional frames {t.SubFrames}/100"),
+            ]);
         AddTail(fields, m, raw, 10);
         var notes = CueNotes(m);
         if (m.SpecialType is { } s && s.IgnoresEventTime()) notes.Insert(0, "This special type ignores the event time field.");
-        return new MtcDescription(hex, $"MTC Cueing (Non-Real Time) — {m.SetupName} @ {t}", fields, notes);
+        var when = m.SpecialType is { } sp && sp.IgnoresEventTime() ? "" : $" @ {t}";
+        return new MtcDescription(hex, $"MTC Cueing (Non-Real Time) — {m.SetupName}{when}", fields, notes);
     }
 
     private static MtcDescription DescribeRtCueing(string hex, RealTimeCueingMessage m, ReadOnlySpan<byte> raw)

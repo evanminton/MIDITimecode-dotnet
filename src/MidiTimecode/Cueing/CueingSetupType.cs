@@ -70,7 +70,11 @@ public static class CueingSetupTypeExtensions
     /// <summary>Special types defined for Real Time cueing (only System Stop).</summary>
     public static bool IsDefinedForRealTime(this CueingSpecialType type) => type == CueingSpecialType.SystemStop;
 
-    /// <summary>Specials 01 00 - 04 00 ignore the event time field.</summary>
+    /// <summary>
+    /// Specials 01 00 - 04 00 ignore the event time field ("Note that types 01 00 through 04 00 ignore
+    /// the event time field", MTC Cueing, Special). This includes System Stop, even though its own
+    /// description speaks of "a time when the unit may shut down".
+    /// </summary>
     public static bool IgnoresEventTime(this CueingSpecialType type) => type is
         CueingSpecialType.EnableEventList or CueingSpecialType.DisableEventList or
         CueingSpecialType.ClearEventList or CueingSpecialType.SystemStop;

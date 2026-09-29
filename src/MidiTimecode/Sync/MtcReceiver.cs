@@ -43,7 +43,8 @@ public sealed class MtcTimecodeEventArgs(Timecode timecode, MtcDirection directi
 /// <item>Direction is detected from ascending / descending piece numbers.</item>
 /// <item>A forward-assembled time is 2 frames old when piece 7 arrives, so +2 frames is added for
 /// display. In reverse the time is complete on piece 0, which falls on the start boundary of the
-/// frame it encodes; the position has just moved into the frame before it, so −1 is applied.</item>
+/// frame it encodes; the position has just moved into the frame before it, so −1 is applied (derived
+/// from that boundary rule; the specification states no reverse offset).</item>
 /// <item>Between completions the position is followed quarter frame by quarter frame, so the display
 /// changes on every frame boundary (pieces 0 and 4) and follows direction changes at once.</item>
 /// <item>Every complete sequence is verified against the followed position; a missing quarter frame
