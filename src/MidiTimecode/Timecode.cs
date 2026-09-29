@@ -173,7 +173,7 @@ public readonly partial struct Timecode : IEquatable<Timecode>, IComparable<Time
     /// <summary><see cref="ToString()"/> followed by the rate, e.g. <c>01:37:52:16 @30</c>.</summary>
     public string ToLongString() => $"{this} @{Rate.ShortName()}";
 
-    [GeneratedRegex(@"^\s*(\d{1,2})[:.](\d{1,2})[:.](\d{1,2})([:;.,])(\d{1,2})(?:\.(\d{1,2}))?\s*$")]
+    [GeneratedRegex(@"^\s*([0-9]{1,2})[:.]([0-9]{1,2})[:.]([0-9]{1,2})([:;.,])([0-9]{1,2})(?:\.([0-9]{1,2}))?\s*$")]
     private static partial Regex TimecodePattern();
 
     /// <summary>
