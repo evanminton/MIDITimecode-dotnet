@@ -119,9 +119,15 @@ public sealed class NonRealTimeCueingMessage : CueingMessageBase
         if (data.Length < MtcConstants.NonRealTimeCueingBaseLength || data[0] != MtcConstants.SysExStart ||
             data[1] != MtcConstants.UniversalNonRealTime || data[3] != MtcConstants.SubIdNonRealTimeCueing ||
             data[2] > 0x7F || data[4] > 0x7F) return false;
-        var (hours, rate) = Timecode.DecodeHoursByte(data[5]);
-        if (!Timecode.TryCreate(hours, data[6] & 0x7F, data[7] & 0x7F, data[8] & 0x7F, rate, out var time, data[9] & 0x7F)) return false;
         if (!TryReadTail(data, 10, out var evt, out var info)) return false;
+        var (hours, rate) = Timecode.DecodeHoursByte(data[5]);
+        if (!Timecode.TryCreate(hours, data[6] & 0x7F, data[7] & 0x7F, data[8] & 0x7F, rate, out var time, data[9] & 0x7F))
+        {
+            // Specials 01 00 - 04 00 ignore the event time field, so any bytes there are acceptable.
+            var ignored = data[4] == (byte)CueingSetupType.Special && ((CueingSpecialType)evt).IgnoresEventTime();
+            if (!ignored) return false;
+            time = Timecode.Zero(rate);
+        }
         message = new NonRealTimeCueingMessage(data[2], (CueingSetupType)data[4], time, evt, info);
         return true;
     }
